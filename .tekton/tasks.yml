@@ -56,3 +56,29 @@ spec:
         python -m pip install --upgrade pip wheel
         pip install -r requirements.txt
         nosetests $(params.args)
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: flake8
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: image
+      type: string
+      default: python:3.9-slim
+    - name: args
+      type: array
+      default: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
+  steps:
+    - name: flake8
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          set -e
+          python -m pip install --upgrade pip
+          pip install flake8
+          flake8 . $(params.args[*])
